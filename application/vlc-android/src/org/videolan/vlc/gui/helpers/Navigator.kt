@@ -39,7 +39,6 @@ import com.google.android.material.navigation.NavigationBarView
 import org.videolan.medialibrary.media.MediaLibraryItem
 import org.videolan.resources.EXTRA_FOR_ESPRESSO
 import org.videolan.resources.EXTRA_TARGET
-import org.videolan.resources.ID_AUDIO
 import org.videolan.resources.ID_DIRECTORIES
 import org.videolan.resources.ID_VIDEO
 import org.videolan.resources.util.parcelableList
@@ -78,7 +77,7 @@ class Navigator : NavigationBarView.OnItemSelectedListener, DefaultLifecycleObse
         activity = this
         this@Navigator.settings = settings
         forExpresso = intent.parcelableList(EXTRA_FOR_ESPRESSO)
-        currentFragmentId = intent.getIntExtra(EXTRA_TARGET, 0)
+        currentFragmentId = visibleDestination(intent.getIntExtra(EXTRA_TARGET, 0))
         if (state !== null) {
             currentFragment = supportFragmentManager.getFragment(state, "current_fragment")
         }
@@ -88,6 +87,7 @@ class Navigator : NavigationBarView.OnItemSelectedListener, DefaultLifecycleObse
     }
 
     override fun onStart(owner: LifecycleOwner) {
+        if (currentFragment is AudioBrowserFragment) showFragment(defaultFragmentId)
         if (currentFragment === null && !currentIdIsExtension()) showFragment(if (currentFragmentId != 0) currentFragmentId else settings.getInt(KEY_FRAGMENT_ID, defaultFragmentId))
         navigationView.forEach { it.setOnItemSelectedListener(this) }
     }
@@ -98,7 +98,6 @@ class Navigator : NavigationBarView.OnItemSelectedListener, DefaultLifecycleObse
 
     private fun getNewFragment(id: Int): Fragment {
         return when (id) {
-            R.id.nav_audio -> AudioBrowserFragment()
             R.id.nav_directories -> MainBrowserFragment().apply {
                 arguments = bundleOf(EXTRA_FOR_ESPRESSO to forExpresso)
             }
@@ -108,7 +107,10 @@ class Navigator : NavigationBarView.OnItemSelectedListener, DefaultLifecycleObse
         }
     }
 
-    private fun showFragment(id: Int) {
+    private fun visibleDestination(id: Int) = if (id == R.id.nav_audio) defaultFragmentId else id
+
+    private fun showFragment(destination: Int) {
+        val id = visibleDestination(destination)
         val tag = getTag(id)
         val fragment = getNewFragment(id)
         showFragment(fragment, id, tag)
@@ -131,7 +133,7 @@ class Navigator : NavigationBarView.OnItemSelectedListener, DefaultLifecycleObse
     private fun idIsExtension(id: Int) = id in 1..100
 
     override fun reloadPreferences() {
-        currentFragmentId = settings.getInt(KEY_FRAGMENT_ID, defaultFragmentId)
+        currentFragmentId = visibleDestination(settings.getInt(KEY_FRAGMENT_ID, defaultFragmentId))
     }
 
     override fun configurationChanged(size: Int) {
@@ -149,7 +151,6 @@ class Navigator : NavigationBarView.OnItemSelectedListener, DefaultLifecycleObse
     }
 
     private fun getTag(id: Int) = when (id) {
-        R.id.nav_audio -> ID_AUDIO
         R.id.nav_directories -> ID_DIRECTORIES
         else -> ID_VIDEO
     }
