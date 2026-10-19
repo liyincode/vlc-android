@@ -1,0 +1,23 @@
+Subject: rebuild the patched libdsm when using prebuilt contribs
+
+--- a/buildsystem/compile-libvlc.sh
++++ b/buildsystem/compile-libvlc.sh
+@@ -570,6 +570,18 @@
+     fi
+ fi
+ 
++# Rebuild our patched libdsm after extracting the otherwise unchanged contribs.
++if [ -f "$VLC_SRC_DIR/contrib/src/libdsm/0001-netbios-use-poll-for-posix-descriptors.patch" ]; then
++    rm -f "$VLC_CONTRIB_DIR/.libdsm"
++    make -C "$VLC_CONTRIB_DIR" TARBALLS="$VLC_TARBALLS" \
++        CC="$CROSS_CLANG" CXX="${CROSS_CLANG}++" \
++        AR="${CROSS_TOOLS}ar" RANLIB="${CROSS_TOOLS}ranlib" STRIP="${CROSS_TOOLS}strip" \
++        EXTRA_CFLAGS="$VLC_CFLAGS -I$VLC_CONTRIB/include" \
++        EXTRA_CXXFLAGS="$VLC_CFLAGS $VLC_CXXFLAGS -I$VLC_CONTRIB/include" \
++        .libdsm
++    avlc_checkfail "patched libdsm: build failed"
++fi
++
+ # disable forced -lc++ in contribs
+ PC_FILES=$(find ${VLC_CONTRIB_OUT_DIR}/lib/pkgconfig -type f -name '*.pc')
+ for pcfile in ${PC_FILES}; do

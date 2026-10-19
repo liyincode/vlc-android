@@ -156,8 +156,10 @@ task generateSources(type: Jar) {
 dependencies {
     devApi project(':libvlcjni:libvlc')
     devApi project(':medialibrary')
-    debugApi "org.videolan.android:libvlc-all:$rootProject.ext.libvlcVersion"
-    debugApi "org.videolan.android:medialibrary-all:$rootProject.ext.medialibraryVersion"
+    debugApi files(rootProject.file('android-libs/libvlc-all-3.7.7-netbios.aar'))
+    debugApi("org.videolan.android:medialibrary-all:$rootProject.ext.medialibraryVersion") {
+        exclude group: 'org.videolan.android', module: 'libvlc-all'
+    }
     releaseApi "org.videolan.android:libvlc-all:$rootProject.ext.libvlcVersion"
     releaseApi "org.videolan.android:medialibrary-all:$rootProject.ext.medialibraryVersion"
     signedReleaseApi "org.videolan.android:libvlc-all:$rootProject.ext.libvlcVersion"

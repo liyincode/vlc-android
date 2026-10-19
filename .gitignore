@@ -1,6 +1,7 @@
 # VLC
 
 /libvlcjni
+/android-libs/*.aar
 /vlc/
 /toolchains/
 application/app/src/main/assets/
@@ -16,7 +17,7 @@ medialibrary/.libs
 medialibrary/prefix
 
 # Remote access
-application/remote-access-client/remoteaccess/**
+application/remote-access-client/remoteaccess/
 application/remote-access-client/assets/**
 
 # Android .so
@@ -29,6 +30,7 @@ application/remote-access-client/assets/**
 .dbg
 
 # Local configuration
+.tmp/
 local.properties
 env.sh
 
