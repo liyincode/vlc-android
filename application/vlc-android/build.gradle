@@ -209,6 +209,13 @@ dependencies {
 
     implementation 'nl.dionsegijn:konfetti-xml:2.0.4'
     implementation 'com.google.zxing:core:3.4.0'
+    implementation 'com.hierynomus:smbj:0.15.0'
+    constraints {
+        // SMBJ and the remote-access server must use one Bouncy Castle release.
+        implementation 'org.bouncycastle:bcprov-jdk18on:1.86'
+        implementation 'org.bouncycastle:bcpkix-jdk18on:1.86'
+        implementation 'org.bouncycastle:bcutil-jdk18on:1.86'
+    }
     implementation "androidx.palette:palette-ktx:1.0.0"
     implementation 'com.jaredrummler:colorpicker:1.1.0'
 

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="smb_read_only">This NAS share is read-only. The file was not changed.</string>
+    <string name="smb_retry">Reload folder</string>
+    <string name="smb_move">Move to…</string>
+    <string name="smb_move_here">Move here</string>
+    <string name="smb_parent_folder">Parent folder</string>
+    <string name="smb_working">Working…</string>
+    <string name="smb_invalid_name">Enter a valid file name without path separators or reserved characters.</string>
+    <string name="smb_same_path">Choose a different name or folder.</string>
+    <string name="smb_login_required">Connect to this NAS and select Remember password first. The saved login must uniquely match this server and share.</string>
+    <string name="smb_server_unverified">The saved NAS login could not be matched to this address. Check the NAS connection and reopen its original saved entry.</string>
+    <string name="smb_name_exists">A file or folder with this name already exists. Nothing was replaced.</string>
+    <string name="smb_access_denied">The NAS denied this operation. Check the account permissions.</string>
+    <string name="smb_login_failed">The saved login was rejected. Reconnect to the NAS and update the saved login.</string>
+    <string name="smb_file_missing">The file or folder is no longer available. Refresh the folder.</string>
+    <string name="smb_file_in_use">The file is in use. Stop playback and try again.</string>
+    <string name="smb_list_failed">Could not load this folder. Check the NAS connection and try again.</string>
+    <string name="smb_operation_uncertain">The result could not be confirmed. Close this dialog and refresh the source and destination folders before trying again.</string>
+    <string name="smb_operation_done">File updated.</string>
+    <string name="smb_progress_not_copied">File updated, but media library records could not be fully updated. Refresh the library; do not repeat the file operation.</string>
+    <string name="smb_folder_hint">Choose an existing folder in this share.</string>
+    <string name="smb_unsupported">This file address is not supported for file operations.</string>
+</resources>

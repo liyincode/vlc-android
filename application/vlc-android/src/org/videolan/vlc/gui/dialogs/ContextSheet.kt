@@ -77,6 +77,7 @@ import org.videolan.vlc.util.ContextOption.CTX_QUICK_PLAY
 import org.videolan.vlc.util.ContextOption.CTX_REMOVE_FROM_PLAYLIST
 import org.videolan.vlc.util.ContextOption.CTX_REMOVE_GROUP
 import org.videolan.vlc.util.ContextOption.CTX_RENAME
+import org.videolan.vlc.util.ContextOption.CTX_SMB_MOVE
 import org.videolan.vlc.util.ContextOption.CTX_RENAME_GROUP
 import org.videolan.vlc.util.ContextOption.CTX_SET_RINGTONE
 import org.videolan.vlc.util.ContextOption.CTX_SHARE
@@ -174,6 +175,7 @@ class ContextSheet : VLCBottomSheetDialogFragment() {
         if (flags.contains(CTX_REMOVE_FROM_PLAYLIST)) add(Simple(CTX_REMOVE_FROM_PLAYLIST, getString(R.string.remove), R.drawable.ic_remove_from_playlist))
         if (flags.contains(CTX_STOP_AFTER_THIS)) add(Simple(CTX_STOP_AFTER_THIS, getString(R.string.stop_after_this), R.drawable.ic_stop_after_this))
         if (flags.contains(CTX_RENAME)) add(Simple(CTX_RENAME, getString(R.string.rename), R.drawable.ic_edit))
+        if (flags.contains(CTX_SMB_MOVE)) add(Simple(CTX_SMB_MOVE, getString(R.string.smb_move), R.drawable.ic_folder))
         if (flags.contains(CTX_COPY)) add(Simple(CTX_COPY, getString(R.string.copy_to_clipboard), R.drawable.ic_link))
         if (flags.contains(CTX_DELETE)) add(Simple(CTX_DELETE, getString(R.string.delete), R.drawable.ic_delete))
         if (flags.contains(CTX_SHARE)) add(Simple(CTX_SHARE, getString(R.string.share), R.drawable.ic_share))

@@ -1,0 +1,9 @@
+// Isolated regression suite while the upstream test source set has unrelated compile errors.
+// This opt-in init script does not alter the default/full test task configuration.
+gradle.projectsEvaluated {
+    def target = gradle.rootProject.project(':application:vlc-android')
+    def testDirectory = target.file('test/org/videolan/vlc/util/smb').toPath()
+    target.tasks.matching { it.name in ['compileDebugUnitTestKotlin', 'kaptGenerateStubsDebugUnitTestKotlin'] }.configureEach {
+        exclude { entry -> !entry.directory && !entry.file.toPath().startsWith(testDirectory) }
+    }
+}

@@ -143,6 +143,11 @@ import org.videolan.vlc.util.ContextOption.CTX_PLAY_AS_AUDIO
 import org.videolan.vlc.util.ContextOption.CTX_PLAY_NEXT
 import org.videolan.vlc.util.ContextOption.CTX_QUICK_PLAY
 import org.videolan.vlc.util.ContextOption.CTX_RENAME
+import org.videolan.vlc.util.ContextOption.CTX_SMB_MOVE
+import org.videolan.vlc.gui.dialogs.SmbFileOperationDialog
+import org.videolan.vlc.gui.dialogs.SMB_FILE_OPERATION_RESULT
+import org.videolan.vlc.gui.dialogs.SMB_FILE_OPERATION_MESSAGE
+import org.videolan.vlc.gui.helpers.UiTools.showPinIfNeeded
 import org.videolan.vlc.util.FlagSet
 import org.videolan.vlc.util.LifecycleAwareScheduler
 import org.videolan.vlc.util.Permissions
@@ -314,6 +319,7 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
         requireActivity().supportFragmentManager.setFragmentResultListener(CONFIRM_RENAME_DIALOG_RESULT, viewLifecycleOwner) { requestKey, bundle ->
             val media = bundle.parcelable<MediaLibraryItem>(RENAME_DIALOG_MEDIA) ?: return@setFragmentResultListener
             val name = bundle.getString(RENAME_DIALOG_NEW_NAME) ?: return@setFragmentResultListener
+            if ((media as? MediaWrapper)?.uri?.scheme == "smb") return@setFragmentResultListener
             lifecycleScope.launch(Dispatchers.IO) {
                 (media as MediaWrapper).uri.path?.let { File(it) }?.let { file ->
                     if (file.exists()) {
@@ -325,6 +331,11 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
                 }
                 viewModel.refresh()
             }
+        }
+        requireActivity().supportFragmentManager.setFragmentResultListener(SMB_FILE_OPERATION_RESULT, viewLifecycleOwner) { _, bundle ->
+            viewModel.refresh()
+            val message = bundle.getInt(SMB_FILE_OPERATION_MESSAGE)
+            if (message != 0) Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
         }
         lifecycleScope.launch {
             PlaylistManager.shuffling.collect {
@@ -793,7 +804,10 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
             val mw = item as MediaWrapper
             if (mw.uri.scheme == "content" || mw.uri.scheme == OTG_SCHEME) return@launch
             val flags = FlagSet(ContextOption::class.java).apply {
-                add(CTX_RENAME)
+                val smbFile = mw.uri.scheme == "smb" && mw.type != MediaWrapper.TYPE_DIR &&
+                    android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M
+                if (mw.uri.scheme != "smb" || smbFile) add(CTX_RENAME)
+                if (smbFile) add(CTX_SMB_MOVE)
                 if (!isRootDirectory && this@BaseBrowserFragment is FileBrowserFragment) add(CTX_DELETE)
                 if (!isRootDirectory && this@BaseBrowserFragment is FileBrowserFragment && Settings.getInstance(requireActivity()).getBoolean(KEY_QUICK_PLAY, false)) add(CTX_QUICK_PLAY)
                 if (!isRootDirectory && this is FileBrowserFragment) add(CTX_DELETE)
@@ -872,9 +886,13 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
 
             CTX_DELETE -> removeItem(mw)
             CTX_RENAME -> {
-                val dialog = RenameDialog.newInstance(mw, true)
-                dialog.show(requireActivity().supportFragmentManager, RenameDialog::class.simpleName)
+                if (mw.uri.scheme == "smb") showSmbOperation(mw, false)
+                else {
+                    val dialog = RenameDialog.newInstance(mw, true)
+                    dialog.show(requireActivity().supportFragmentManager, RenameDialog::class.simpleName)
+                }
             }
+            CTX_SMB_MOVE -> showSmbOperation(mw, true)
 
             CTX_INFORMATION -> requireActivity().showMediaInfo(mw)
             CTX_PLAY_AS_AUDIO -> lifecycleScope.launch {
@@ -922,6 +940,17 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
             return
         }
         onLongClick(v, position, item)
+    }
+
+    private fun showSmbOperation(media: MediaWrapper, moving: Boolean) {
+        lifecycleScope.launch {
+            if (requireActivity().showPinIfNeeded()) return@launch
+            val manager = requireActivity().supportFragmentManager
+            if (!manager.isStateSaved && manager.findFragmentByTag("smb_file_operation") == null) {
+                SmbFileOperationDialog.newInstance(media.uri.toString(), moving)
+                    .show(manager, "smb_file_operation")
+            }
+        }
     }
 
     override fun onMainActionClick(v: View, position: Int, item: MediaLibraryItem) {}

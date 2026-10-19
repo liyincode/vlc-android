@@ -41,6 +41,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -101,6 +102,9 @@ import org.videolan.vlc.gui.dialogs.RENAME_DIALOG_MEDIA
 import org.videolan.vlc.gui.dialogs.RENAME_DIALOG_NEW_NAME
 import org.videolan.vlc.gui.dialogs.RenameDialog
 import org.videolan.vlc.gui.dialogs.SavePlaylistDialog
+import org.videolan.vlc.gui.dialogs.SmbFileOperationDialog
+import org.videolan.vlc.gui.dialogs.SMB_FILE_OPERATION_RESULT
+import org.videolan.vlc.gui.dialogs.SMB_FILE_OPERATION_MESSAGE
 import org.videolan.vlc.gui.dialogs.VIDEO_GROUPING
 import org.videolan.vlc.gui.dialogs.showContext
 import org.videolan.vlc.gui.helpers.AudioUtil.setRingtone
@@ -143,6 +147,7 @@ import org.videolan.vlc.util.ContextOption.CTX_PLAY_AS_AUDIO
 import org.videolan.vlc.util.ContextOption.CTX_PLAY_FROM_START
 import org.videolan.vlc.util.ContextOption.CTX_PLAY_NEXT
 import org.videolan.vlc.util.ContextOption.CTX_REMOVE_GROUP
+import org.videolan.vlc.util.ContextOption.CTX_RENAME
 import org.videolan.vlc.util.ContextOption.CTX_RENAME_GROUP
 import org.videolan.vlc.util.ContextOption.CTX_SET_RINGTONE
 import org.videolan.vlc.util.ContextOption.CTX_SHARE
@@ -330,6 +335,11 @@ class VideoGridFragment : MediaBrowserFragment<VideosViewModel>(), SwipeRefreshL
         binding.fastScroller.setRecyclerView(binding.videoGrid, viewModel.provider)
 
         (parentFragment as? VideoBrowserFragment)?.videoGridOnlyFavorites = viewModel.provider.onlyFavorites
+        requireActivity().supportFragmentManager.setFragmentResultListener(SMB_FILE_OPERATION_RESULT, viewLifecycleOwner) { _, bundle ->
+            viewModel.refresh()
+            val message = bundle.getInt(SMB_FILE_OPERATION_MESSAGE)
+            if (message != 0) Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
+        }
         requireActivity().supportFragmentManager.setFragmentResultListener(CONFIRM_ADD_TO_GROUP_RESULT, viewLifecycleOwner) { requestKey, bundle ->
             lifecycleScope.launch {
                 val selection = bundle.parcelableArray<MediaWrapper>(AddToGroupDialog.KEY_TRACKS) ?: arrayOf()
@@ -620,6 +630,14 @@ class VideoGridFragment : MediaBrowserFragment<VideosViewModel>(), SwipeRefreshL
                 CTX_PLAY_ALL -> viewModel.playVideo(activity, media, position, forceAll = true)
                 CTX_PLAY -> viewModel.play(position)
                 CTX_INFORMATION -> showInfoDialog(media)
+                CTX_RENAME -> lifecycleScope.launch {
+                    if (media.uri.scheme != "smb" || requireActivity().showPinIfNeeded()) return@launch
+                    val manager = requireActivity().supportFragmentManager
+                    if (!manager.isStateSaved && manager.findFragmentByTag("smb_file_operation") == null) {
+                        SmbFileOperationDialog.newInstance(media.uri.toString(), false)
+                            .show(manager, "smb_file_operation")
+                    }
+                }
                 CTX_DELETE -> removeItem(media)
                 CTX_APPEND -> MediaUtils.appendMedia(activity, media)
                 CTX_SET_RINGTONE -> requireActivity().setRingtone(media)
@@ -726,6 +744,7 @@ class VideoGridFragment : MediaBrowserFragment<VideosViewModel>(), SwipeRefreshL
                     }
                     is MediaWrapper -> {
                         val flags = createCtxVideoFlags().apply {
+                            if (item.uri.scheme == "smb" && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) add(CTX_RENAME)
                             if (item.isFavorite) add(CTX_FAV_REMOVE) else add(CTX_FAV_ADD)
                             if (item.seen > 0) add(CTX_MARK_AS_UNPLAYED) else add(CTX_MARK_AS_PLAYED)
                             if (item.time != 0L) add(CTX_PLAY_FROM_START)
